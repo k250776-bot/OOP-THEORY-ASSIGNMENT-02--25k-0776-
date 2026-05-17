@@ -147,6 +147,8 @@ class Dealership {
     }
     static int getTotalDealerShips () { return totalDealerShips; }
     string getDealerShipName() { return DealerShipName; }
+
+    void setVerified(bool status) { isVerfiedPartner = status; }
 };
 int Dealership::totalDealerShips = 0;
 
@@ -343,5 +345,27 @@ class Client {
     void viewSelections() const {
         cout << "\n " << clientName<< "\n" << endl;
         for(int i= 0; i<selectCount ;++i) selections[i]->displayCard();
+    }
+};
+
+class Affan {
+private:
+    string adminName;
+    const int accessLevel;
+    string department;
+    string shift;
+    bool isActive;
+
+public:
+    Affan(string name, int level) : adminName(name), accessLevel(level), department("Moderation"), shift("Day"), isActive(true) {}
+
+    void approveListing(Listing& list) { list.setApproval(true); cout << "Listing approved and is now live.\n"<< endl; }
+    void pullListing(Listing& list) { list.setApproval(false); cout << "Listing has been removed.\n"<< endl; }
+     void verifyDealer(Dealership& dealer) { dealer.setVerified(true);
+        cout << dealer.getDealerShipName() << " is now a verified partner.\n";
+    }
+    void viewSystemStats() const {
+        cout << "Partner Dealers : " << Dealership::getTotalDealerShips () << "\n";
+        cout << "Total Registers  : " << Listing::getTotalListings() << "\n";
     }
 };
