@@ -260,9 +260,37 @@ class DriveChicagoPlatform {
     void showFrontPage () {
         cout << "Drive Chicago\nAvailable Cars : " << registerCount<< endl;
         if(featuredBanner != "" ) {cout << featuredBanner << "\n" << endl;}
-        for(int i=0;i< registerCount; ++i) {if (Register[i]->getStatus() )
-        Register[i]->displayCard();
+        for(int i=0;i< registerCount; ++i) { if (Register[i]->getStatus() ) Register[i]->displayCard();
         }
     }
+    void runSponsorBanner(string banner) {featuredBanner = banner; cout << "Platform - the banner is updated :"<< banner << "\n"<< endl; }
+};
 
+class CruiseNight {
+    private : 
+    string eventName;
+    string cityName;
+    string venue;
+    string timeSlotForEvent;
+    string eventDetails;
+    string dayOfEveent;
+
+    public :
+    CruiseNight () : eventName("TBA"), cityName("chicago, IL"), venue("TBA"), timeSlotForEvent("TBA"), eventDetails("TBA"), dayOfEveent("TBA") {}
+    CruiseNight(const string& name,const string& city,const string& destination,const string& time,const string& detail,const string& day) : eventName(name),cityName(city),venue(destination), timeSlotForEvent(time), eventDetails(detail), dayOfEveent(day) {}
+
+    void displayEvent() const {
+        cout << "Day : " << dayOfEveent << "City : " << cityName << "\n" << endl;
+        cout << "EVent : " << eventName << "\nLocation : " << venue << "\nTime : " << timeSlotForEvent << "\nDetails : " << eventDetails << endl;
+    }
+    void submitEvent() {cout << "Community - " << eventName<< "\nin" << cityName <<" submitted for review\n" << endl; 
+    cout << "Wait for the Driva Chicago Team verification. This process takes time so your co operation meant to us.\n" << endl;
+    }
+    void registerCar(string ownerCredential, string carCrdential) {
+        cout << "Register + " << ownerCredential << "registered" << carCrdential << "for " << eventName <<"\n" <<endl;
+        cout << "Register - Your confirmation for the " << venue << "is sent tot the host\n"<< endl;
+     }
+    void announceWinner(string winnerCredential, string winnerCAr) {
+        cout << "Show stopper : " <<winnerCredential << " Car : " << winnerCAr <<endl;
+    }
 };
