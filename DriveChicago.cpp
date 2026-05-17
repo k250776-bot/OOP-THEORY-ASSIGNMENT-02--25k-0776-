@@ -196,6 +196,7 @@ class Listing {
     string getCondition () const { return condition; }
     bool getStatus() const { return isApproved; }
     int getListingID () const {return listingID; }
+    Dealership* getCarOwner() const { return carOwner; }
 
     void setApproval (bool status) {isApproved = status;}
 };
@@ -287,10 +288,60 @@ class CruiseNight {
     cout << "Wait for the Driva Chicago Team verification. This process takes time so your co operation meant to us.\n" << endl;
     }
     void registerCar(string ownerCredential, string carCrdential) {
-        cout << "Register + " << ownerCredential << "registered" << carCrdential << "for " << eventName <<"\n" <<endl;
+        cout << "Register + " << ownerCredential << "registered his/her " << carCrdential << "for " << eventName <<"\n" <<endl;
         cout << "Register - Your confirmation for the " << venue << "is sent tot the host\n"<< endl;
      }
     void announceWinner(string winnerCredential, string winnerCAr) {
         cout << "Show stopper : " <<winnerCredential << " Car : " << winnerCAr <<endl;
+    }
+};
+
+class Message {
+    private :
+    const int messageID;
+    string buyerName;
+    string dealershipName;
+    string textMessage;
+    bool isRead;
+
+    public :
+    Message () : buyerName("Unkown"), dealershipName("Unknown" ), textMessage("Empty"), isRead(false), messageID(0)   { }
+    Message (int id,const string& sender,const string& receiver,const string& text) : messageID(id), buyerName(sender), dealershipName(receiver), textMessage(text), isRead(false) {}
+ 
+    void send() const { cout << "DM : " << buyerName << "->" <<dealershipName << "\n" << textMessage <<endl; }
+    void markAsRead() { isRead = true; cout << dealershipName << " opened your message .\n" <<endl; }
+    void deleteMessage () { textMessage = "Delted "; cout << textMessage << "\n" << endl; }
+    void editMessage (string content) { textMessage = content ;} 
+
+    string getBuyerName() {return buyerName; }
+    string getDealershipName () { return dealershipName;}
+    string getMessage() { return textMessage; }
+}; 
+
+class Client {
+    private :
+    string clientName;
+    string clientMail;
+    double budget;
+    int zipCode;
+    int searchRadiusMiles;
+    Listing* selections[10];
+    int selectCount;
+
+    public :
+    Client() : clientName("Unknwn" ), clientMail("Unnknown"), budget(0.0), zipCode(0) , searchRadiusMiles(0), selectCount(0) {}
+    Client (const string& name,const string& mail,double cash,int code,int miles) : zipCode(code), selectCount(0), clientMail(mail), clientName(name), budget(cash), searchRadiusMiles(miles) {}
+
+    void browseNew() const { cout << clientName << " is browsing NEW cars within " << searchRadiusMiles << " miles of ZIP " << zipCode << "\n" << endl;}
+    void browseUsed() const { cout << clientName << " is browsing USED cars within " << searchRadiusMiles << " miles of ZIP " << zipCode << "\n" << endl;}
+    
+    void saveSelection(Listing* list) {
+        if(selectCount < 10) {selections[selectCount++] = list; cout << "Listing ID : " << list->getListingID() << " saved by " << clientName <<endl;}
+        else {cout << "Cap limit reached.. \n" <<endl; }
+    }
+    void sendDM(Listing* list, string message) {Message dm(0776,clientName,list->getCarOwner()->getDealerShipName(),message);}
+    void viewSelections() const {
+        cout << "\n " << clientName<< "\n" << endl;
+        for(int i= 0; i<selectCount ;++i) selections[i]->displayCard();
     }
 };
