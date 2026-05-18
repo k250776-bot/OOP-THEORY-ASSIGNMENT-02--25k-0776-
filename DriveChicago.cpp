@@ -2,6 +2,21 @@
 #include "string"
 using namespace std;
 
+class User {
+    protected :
+    string UserName; string UserEmail;
+    bool isLoggedIn;
+
+    public :
+    User () : UserName("Unkown"),UserEmail("Unknownn"), isLoggedIn(false) {}
+    User (const string& name, string e_mail) : UserName(name),UserEmail(e_mail), isLoggedIn(false) {}
+    
+    virtual void viewDashboard () = 0;
+
+    void login () {isLoggedIn =true;}
+    void logout () { isLoggedIn = false; }
+}; 
+
 class Engine {
     private :
     string EngineType;
@@ -91,6 +106,9 @@ class Vehicle {
     Engine engine;
     Transmission transmission;
 
+    protected:
+    void printBaseInfo() const { cout << Year << " " << VehicleMake << " " << VehicleModel<< " | " << Color << " | " << bodyStyle << " | " << OdometerReading << " miles\n"<< endl;}
+
     public :
     Vehicle () : VehcileIdentificationNumber("Unknown") {}
     Vehicle (const string& VIN,const string& make,const string& model,int year,int mileage,const string& color,const string& style,Engine heart,Transmission brain) : VehcileIdentificationNumber(VIN), VehicleMake(make), VehicleModel(model), Year(year), OdometerReading(mileage), Color(color), bodyStyle(style) {
@@ -114,12 +132,16 @@ class Vehicle {
         cout << "Odometer : " << previousReading << " -> " << OdometerReading << "miles." << endl; 
     }
     void serviceCar() { engine.checkOil(); transmission.checkFluid(); }
-    void displayVehicleInfo() const { cout << Year << " " << VehicleMake << " " << VehicleModel << "|" << Color << "|" << bodyStyle << "|" << OdometerReading << "miles\n" << endl; }
+    virtual void displayVehicleInfo() const =0 ;
 
     string getVehicleMake () const { return VehicleMake; }
     int getOdometerReading () const { return OdometerReading; }
     string getBodyStyle() const { return bodyStyle; }
+
+    bool operator==(const Vehicle& other) const { return (VehicleMake == other.VehicleMake && VehicleModel == other.VehicleModel && Year == other.Year); }
 };
+
+class Listing;
 
 class Dealership {
     private :
@@ -147,6 +169,7 @@ class Dealership {
     }
     static int getTotalDealerShips () { return totalDealerShips; }
     string getDealerShipName() { return DealerShipName; }
+    friend void generateDealReport(Dealership& d, Listing& l);
 
     void setVerified(bool status) { isVerfiedPartner = status; }
 };
@@ -155,7 +178,7 @@ int Dealership::totalDealerShips = 0;
 class Listing {
     private : 
     const int listingID;
-    Vehicle car;
+    Vehicle* car;
     Dealership* carOwner;
     double carPrice;
     bool isApproved;
@@ -166,7 +189,7 @@ class Listing {
 
     public :
     Listing () : listingID(0), carOwner(nullptr), carPrice(0), isApproved(false), isFeatured(false) {}
-    Listing (int id,Vehicle transport,Dealership* build,double price,const string& trim,const string& status) : condition(status), listingID(id), carPrice(price), sideBarTrim(trim), car(transport) {
+    Listing (int id,Vehicle* transport,Dealership* build,double price,const string& trim,const string& status) : condition(status), listingID(id), carPrice(price), sideBarTrim(trim), car(transport) {
         carOwner = build; isFeatured = false;
         isApproved = false; totalListings++;
     }
@@ -174,7 +197,7 @@ class Listing {
     void displayCard() const {
         if (isApproved) {
         cout << "Listing ID : " << listingID << "$" << carPrice << "\n" << endl;
-        car.displayVehicleInfo();
+        car->displayVehicleInfo();
         cout << "   Trim    : " << sideBarTrim << "\n" << "Sold by : " << carOwner->getDealerShipName() << "\n" << (isFeatured ? " >> Featured Lisitng <<\n" : "") << endl;
         } else {
         cout << "Listing ID : " << listingID << " Listing pending due to admin approval.\n" << endl;
@@ -194,13 +217,17 @@ class Listing {
     static int getTotalListings() {return totalListings;}
 
     int getPrice() const { return carPrice; }
-    Vehicle getVehicle() const { return car; }
+    Vehicle* getVehicle() const { return car; }
     string getCondition () const { return condition; }
     bool getStatus() const { return isApproved; }
     int getListingID () const {return listingID; }
     Dealership* getCarOwner() const { return carOwner; }
 
     void setApproval (bool status) {isApproved = status;}
+
+    friend void comparePrices(Listing& a, Listing& b);
+    friend void verifyBuyerDeal(Client& c, Listing& l);
+    bool operator<(const Listing& other) const { return carPrice < other.carPrice; }
 };
 int Listing::totalListings = 0;
 
@@ -222,13 +249,17 @@ class SearchFilter {
     void setBodyStyle (string style) { filterBodyStyle = style; }
     void resetFilters () {filterBodyStyle = "Any"; filterCondition = "Any"; makeFilter = "Any"; }
     bool evaluateListingMatch(Listing list) {
-        Vehicle wheel = list.getVehicle();
+        Vehicle* wheel = list.getVehicle();
         if(list.getPrice() < minPrice || list.getPrice() > maxPrice) {return false;}
-        if(wheel.getOdometerReading() > maxOdometerReading) {return false; }
-        if(makeFilter != "Any" && wheel.getVehicleMake() != makeFilter) {return false; }
+        if(wheel->getOdometerReading() > maxOdometerReading) {return false; }
+        if(makeFilter != "Any" && wheel->getVehicleMake() != makeFilter) {return false; }
         if(filterBodyStyle != "Any" && list.getCondition() != filterCondition) { return false; }
         if(filterCondition != "Any" && list.getCondition() != filterCondition) {return false; }
         return true;
+    }
+    bool evaluateListingMatch(Listing list, int zip) {
+        cout << "Searching near ZIP: " << zip << "\n" <<endl;
+        return evaluateListingMatch(list); 
     }
 };
 
@@ -259,6 +290,7 @@ class DriveChicagoPlatform {
             if(Register[i]->getStatus() && sf.evaluateListingMatch(*Register[i])) { cout << "Matched foind "<< endl; return Register[i];}
         }
         cout << "Tera match bhi nahi mila . Bachelor hi marega ehhehehe\n" << endl; 
+        return nullptr;
     }
     void showFrontPage () {
         cout << "Drive Chicago\nAvailable Cars : " << registerCount<< endl;
@@ -320,7 +352,7 @@ class Message {
     string getMessage() { return textMessage; }
 }; 
 
-class Client {
+class Client : public User {
     private :
     string clientName;
     string clientMail;
@@ -332,7 +364,7 @@ class Client {
 
     public :
     Client() : clientName("Unknwn" ), clientMail("Unnknown"), budget(0.0), zipCode(0) , searchRadiusMiles(0), selectCount(0) {}
-    Client (const string& name,const string& mail,double cash,int code,int miles) : zipCode(code), selectCount(0), clientMail(mail), clientName(name), budget(cash), searchRadiusMiles(miles) {}
+    Client(const string& name, const string& mail, double cash, int code, int miles) : User(name, mail),budget(cash), zipCode(code), searchRadiusMiles(miles), selectCount(0) {}
 
     void browseNew() const { cout << clientName << " is browsing NEW cars within " << searchRadiusMiles << " miles of ZIP " << zipCode << "\n" << endl;}
     void browseUsed() const { cout << clientName << " is browsing USED cars within " << searchRadiusMiles << " miles of ZIP " << zipCode << "\n" << endl;}
@@ -341,14 +373,17 @@ class Client {
         if(selectCount < 10) {selections[selectCount++] = list; cout << "Listing ID : " << list->getListingID() << " saved by " << clientName <<endl;}
         else {cout << "Cap limit reached.. \n" <<endl; }
     }
-    void sendDM(Listing* list, string message) {Message dm(0776,clientName,list->getCarOwner()->getDealerShipName(),message);}
+    void sendDM(Listing* list, string message) {Message dm(0776,clientName,list->getCarOwner()->getDealerShipName(),message);
+    dm.send(); }
     void viewSelections() const {
         cout << "\n " << clientName<< "\n" << endl;
         for(int i= 0; i<selectCount ;++i) selections[i]->displayCard();
     }
+    void viewDashboard() override { cout << "Client: " << UserName << " | Budget: $" << budget << "\n" <<endl; }
+    friend void verifyBuyerDeal(Client& c, Listing& l);
 };
 
-class Affan {
+class Affan : public User{
 private:
     string adminName;
     const int accessLevel;
@@ -357,7 +392,7 @@ private:
     bool isActive;
 
 public:
-    Affan(string name, int level) : adminName(name), accessLevel(level), department("Moderation"), shift("Day"), isActive(true) {}
+    Affan(const string& name,const string& email, int level): User(name, email), accessLevel(level), department("Moderation"), shift("Day"), isActive(true) {}
 
     void approveListing(Listing& list) { list.setApproval(true); cout << "Listing approved and is now live.\n"<< endl; }
     void pullListing(Listing& list) { list.setApproval(false); cout << "Listing has been removed.\n"<< endl; }
@@ -368,4 +403,44 @@ public:
         cout << "Partner Dealers : " << Dealership::getTotalDealerShips () << "\n";
         cout << "Total Registers  : " << Listing::getTotalListings() << "\n";
     }
+    void viewDashboard() override { cout << "Admin: " << UserName << " | Level: " << accessLevel << "\n"<< endl; viewSystemStats(); }
 };
+
+class CAR : public Vehicle{
+    public :
+    CAR (const string& VIN,const string& make,const string& model,int year,int mileage,const string& color,const string& style,Engine heart,Transmission brain) : Vehicle(VIN,make,model,year,mileage,color,style,heart,brain) {}
+
+    void displayVehicleInfo() const override { cout << "Hey ! it's a CaRooooooo" <<endl;
+        printBaseInfo() ;
+    }
+};
+
+class TRuck : public Vehicle {
+    public: 
+    TRuck (const string& VIN,const string& make,const string& model,int year,int mileage,const string& color,const string& style,Engine heart,Transmission brain): Vehicle(VIN,make,model,year,mileage,color,style,heart,brain) {}
+
+    void displayVehicleInfo() const override { cout << "OMG! truckuuuururur" << endl; 
+    printBaseInfo ();
+    }
+};
+
+void comparePrices(Listing& he, Listing& she) {
+    if (he.carPrice < she.carPrice)
+        cout << "Listing #" << he.listingID << " is cheaper.\n"<< endl;
+    else
+        cout << "Listing #" << she.listingID << " is cheaper.\n" << endl;
+}
+
+int main() {
+    Engine gen("V8", 400, 8, "Petrol", true, 80); Transmission gear("TX1", "Auto", 6);
+    CAR civic("VIN786", "Honda", "Civic", 2022, 15000, "Kala", "Sedan", gen, gear);
+    Dealership tariqAutos("Tariq Motors", "Tariq Road Karachi", 3001234, "Sasta aur Tikao!");
+    Listing l1(101, &civic, &tariqAutos, 4500000, "Oriel", "Used"), l2(102, &civic, &tariqAutos, 4800000, "RS", "New");
+    Affan admin("Affan", "affan@drivechicago.com", 1); admin.approveListing(l1);
+    Client hamza("Hamza", "hamza@gmail.com", 5000000, 75300, 10);
+    hamza.viewDashboard(); hamza.saveSelection(&l1);
+    comparePrices(l1, l2);
+    civic.startCar(); civic.displayVehicleInfo();
+    hamza.sendDM(&l1, "Bhai final price kya hogi? Thoda discount kardo murshid.");
+    return 0;
+}
